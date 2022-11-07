@@ -10,6 +10,7 @@ import net.jitse.npclib.NPCLib;
 import net.jitse.npclib.api.events.NPCInteractEvent;
 import net.jitse.npclib.internal.NPCBase;
 import net.jitse.npclib.internal.NPCManager;
+import net.jitse.npclib.utilities.MinecraftProtocol;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -21,15 +22,20 @@ import java.util.UUID;
 
 /**
  * @author Jitse Boonstra
+ * <p>
+ * Edited by ZorTik:
+ * - Support for new protocol classes.
+ * 07/11 2022
  */
 public class PacketListener {
 
     // Classes:
     private final Class<?> packetPlayInUseEntityClazz = Reflection.getMinecraftClass("PacketPlayInUseEntity");
+    private final boolean isNewProtocol = MinecraftProtocol.isNewMinecraftProtocol(packetPlayInUseEntityClazz);
 
     // Fields:
     private final Reflection.FieldAccessor<Integer> entityIdField = Reflection.getField(packetPlayInUseEntityClazz, "a", int.class);
-    private final Reflection.FieldAccessor<?> actionField = Reflection.getField(packetPlayInUseEntityClazz, "action", Object.class);
+    private final Reflection.FieldAccessor<?> actionField = Reflection.getField(packetPlayInUseEntityClazz, isNewProtocol ? "b" : "action", Object.class);
 
     // Prevent players from clicking at very high speeds.
     private final Set<UUID> delay = new HashSet<>();

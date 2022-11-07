@@ -22,6 +22,10 @@
             <id>JitseB</id>
             <name>Jitse Boonstra</name>
         </developer>
+        <developer>
+            <id>ZorT</id>
+            <name>ZorTik</name>
+        </developer>
     </developers>
 
     <licenses>

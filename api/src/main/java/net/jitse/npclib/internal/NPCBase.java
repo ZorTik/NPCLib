@@ -15,6 +15,7 @@ import net.jitse.npclib.api.state.NPCAnimation;
 import net.jitse.npclib.api.state.NPCSlot;
 import net.jitse.npclib.api.state.NPCState;
 import net.jitse.npclib.hologram.Hologram;
+import net.jitse.npclib.hologram.HologramImpl;
 import net.jitse.npclib.utilities.MathUtil;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
@@ -67,6 +68,10 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
         return instance;
     }
 
+    protected Hologram getPlayerHologram(Player player) {
+        return getHologram(player);
+    }
+
     // Unique per-player hologram by Gatt, modifications and refactoring done by Jitse (JMB - 23rd Jan. 2021).
     protected Hologram getHologram(Player player) {
         Validate.notNull(player, "Player cannot be null.");
@@ -99,8 +104,7 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
                 getHologram(player).show(player);
             } else {
                 Hologram hologram = getHologram(player);
-                List<Object> updatePackets = hologram.getUpdatePackets(text);
-                hologram.update(player, updatePackets);
+                hologram.updateLines(player, text);
             }
         }
         return this;
@@ -115,6 +119,10 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
             setText(player, text);
         }
         return this;
+    }
+
+    public List<String> getPlayerLines(Player player) {
+        return getText(player);
     }
 
     @Override
@@ -379,4 +387,5 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
     public void lookAt(Location location) {
         sendHeadRotationPackets(location);
     }
+
 }

@@ -8,6 +8,7 @@ import net.jitse.npclib.api.skin.Skin;
 import net.jitse.npclib.api.state.NPCAnimation;
 import net.jitse.npclib.api.state.NPCSlot;
 import net.jitse.npclib.hologram.Hologram;
+import net.jitse.npclib.hologram.HologramImpl;
 import net.jitse.npclib.internal.MinecraftVersion;
 import net.jitse.npclib.internal.NPCBase;
 import net.jitse.npclib.nms.v1_16_R2.packets.*;
@@ -40,12 +41,12 @@ public class NPC_v1_16_R2 extends NPCBase {
     }
 
     @Override
-    public Hologram getHologram(Player player) {
+    public HologramImpl getHologram(Player player) {
         Hologram hologram = super.getHologram(player);
         if (hologram == null)
-            hologram = new Hologram(MinecraftVersion.V1_16_R2, location.clone().add(0, 0.5, 0), getText(player));
+            hologram = new HologramImpl(MinecraftVersion.V1_16_R2, location.clone().add(0, 0.5, 0), getText(player));
         playerHologram.put(player.getUniqueId(), hologram);
-        return hologram;
+        return (HologramImpl) hologram;
     }
 
     @Override

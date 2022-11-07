@@ -59,7 +59,6 @@ public final class NPCLib {
 
         // Start the bStats metrics system and disable the silly relocate check.
         System.setProperty("bstats.relocatecheck", "false");
-        new NPCLibMetrics(this);
 
         logger.info("Enabled for Minecraft " + versionName);
     }

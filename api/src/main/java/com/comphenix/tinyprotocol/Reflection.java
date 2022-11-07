@@ -334,7 +334,11 @@ public final class Reflection {
      * @throws IllegalArgumentException If the class doesn't exist.
      */
     public static Class<?> getMinecraftClass(String name) {
-        return getCanonicalClass(NMS_PREFIX + "." + name);
+        try {
+            return Class.forName(String.format("net.minecraft.network.protocol.game.%s", name));
+        } catch (ClassNotFoundException e) {
+            return getCanonicalClass(NMS_PREFIX + "." + name);
+        }
     }
 
     /**
