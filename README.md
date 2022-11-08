@@ -1,3 +1,5 @@
+### This repository is 1.19 compatible version of NPCLib made by JitseB.
+
 ![Banner](https://i.imgur.com/WL6QeUA.png)
 NPCLib – Basic non-player character library.<br>
 [![Release](https://jitpack.io/v/JitseB/NPCLib.svg)](https://github.com/JitseB/NPCLib/releases)
