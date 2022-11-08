@@ -22,6 +22,7 @@ import org.bukkit.entity.Player;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.comphenix.protocol.wrappers.WrappedChatComponent.fromLegacyText;
 
@@ -132,12 +133,13 @@ public class NPC_v1_19_R1 extends NPCBase {
 
     private void buildTeamRegister(String name) {
         teamRegisterPacket = protocol.createPacket(PacketType.Play.Server.SCOREBOARD_TEAM);
-        teamRegisterPacket.getChatComponents().write(0, fromLegacyText(name));
-        teamRegisterPacket.getChatComponents().write(1, fromLegacyText(""));
-        teamRegisterPacket.getChatComponents().write(2, fromLegacyText(""));
+
         teamRegisterPacket.getBytes().write(0, (byte) 0x01);
-        teamRegisterPacket.getStrings().write(0, "never");
-        teamRegisterPacket.getStrings().write(1, "always");
+        teamRegisterPacket.getStrings().write(0, name);
+        teamRegisterPacket.getStrings().write(1, "never");
+        teamRegisterPacket.getStrings().write(2, "always");
+        teamRegisterPacket.getStrings().write(3, "");
+        teamRegisterPacket.getStrings().write(4, "");
         teamRegisterPacket.getIntegers().write(0, 21);
         teamRegisterPacket.getIntegers().write(1, 1);
         teamRegisterPacket.getStringArrays().write(0, new String[]{name});
