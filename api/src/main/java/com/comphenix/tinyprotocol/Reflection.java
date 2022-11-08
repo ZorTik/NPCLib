@@ -4,8 +4,11 @@
 
 package com.comphenix.tinyprotocol;
 
+import io.netty.channel.Channel;
+import net.jitse.npclib.utilities.MinecraftProtocol;
 import org.bukkit.Bukkit;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -327,15 +330,19 @@ public final class Reflection {
         return getCanonicalClass(expandVariables(lookupName));
     }
 
+    public static Class<?> getMinecraftClass(String name) {
+        return getMinecraftClass(name, "game");
+    }
+
     /**
      * Retrieve a class in the net.minecraft.server.VERSION.* package.
      *
      * @param name - the name of the class, excluding the package.
      * @throws IllegalArgumentException If the class doesn't exist.
      */
-    public static Class<?> getMinecraftClass(String name) {
+    public static Class<?> getMinecraftClass(String name, @Nullable String packetCategory) {
         try {
-            return Class.forName(String.format("net.minecraft.network.protocol.game.%s", name));
+            return Class.forName(String.format("net.minecraft.network.protocol.%s.%s", packetCategory, name));
         } catch (ClassNotFoundException e) {
             return getCanonicalClass(NMS_PREFIX + "." + name);
         }
@@ -398,4 +405,45 @@ public final class Reflection {
         matcher.appendTail(output);
         return output.toString();
     }
+
+    public static FieldAccessor<Object> playerConnectionField() {
+        if(MinecraftProtocol.isNewMinecraftProtocol()) {
+            return getField("net.minecraft.server.level.EntityPlayer", "b", Object.class);
+        } else {
+            return getField("{nms}.EntityPlayer", "playerConnection", Object.class);
+        }
+    }
+
+    public static FieldAccessor<Object> networkManagerField() {
+        if(MinecraftProtocol.isNewMinecraftProtocol()) {
+            return getField("net.minecraft.server.network.PlayerConnection", "b", Object.class);
+        } else {
+            return getField("{nms}.PlayerConnection", "networkManager", Object.class);
+        }
+    }
+
+    public static FieldAccessor<Channel> channelField() {
+        if(MinecraftProtocol.isNewMinecraftProtocol()) {
+            return getField("net.minecraft.network.NetworkManager", "m", Channel.class);
+        } else {
+            return getField("{nms}.NetworkManager", Channel.class, 0);
+        }
+    }
+
+    public static Class<Object> minecraftServerClass() {
+        if(MinecraftProtocol.isNewMinecraftProtocol()) {
+            return getUntypedClass("net.minecraft.server.MinecraftServer");
+        } else {
+            return getUntypedClass("{nms}.MinecraftServer");
+        }
+    }
+
+    public static Class<Object> serverConnectionClass() {
+        if(MinecraftProtocol.isNewMinecraftProtocol()) {
+            return getUntypedClass("net.minecraft.server.network.ServerConnection");
+        } else {
+            return getUntypedClass("{nms}.ServerConnection");
+        }
+    }
+
 }

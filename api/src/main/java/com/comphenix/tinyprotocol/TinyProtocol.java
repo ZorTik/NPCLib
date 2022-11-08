@@ -9,6 +9,7 @@ import com.google.common.collect.MapMaker;
 import com.mojang.authlib.GameProfile;
 import io.netty.channel.*;
 import net.jitse.npclib.NPCLib;
+import net.jitse.npclib.utilities.MinecraftProtocol;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -32,13 +33,13 @@ public abstract class TinyProtocol {
 
     // Used in order to lookup a channel
     private static final Reflection.MethodInvoker getPlayerHandle = Reflection.getMethod("{obc}.entity.CraftPlayer", "getHandle");
-    private static final Reflection.FieldAccessor<Object> getConnection = Reflection.getField("{nms}.EntityPlayer", "playerConnection", Object.class);
-    private static final Reflection.FieldAccessor<Object> getManager = Reflection.getField("{nms}.PlayerConnection", "networkManager", Object.class);
-    private static final Reflection.FieldAccessor<Channel> getChannel = Reflection.getField("{nms}.NetworkManager", Channel.class, 0);
+    private static final Reflection.FieldAccessor<Object> getConnection = Reflection.playerConnectionField();
+    private static final Reflection.FieldAccessor<Object> getManager = Reflection.networkManagerField();
+    private static final Reflection.FieldAccessor<Channel> getChannel = Reflection.channelField();
 
     // Looking up ServerConnection
-    private static final Class<Object> minecraftServerClass = Reflection.getUntypedClass("{nms}.MinecraftServer");
-    private static final Class<Object> serverConnectionClass = Reflection.getUntypedClass("{nms}.ServerConnection");
+    private static final Class<Object> minecraftServerClass = Reflection.minecraftServerClass();
+    private static final Class<Object> serverConnectionClass = Reflection.serverConnectionClass();
     private static final Reflection.FieldAccessor<Object> getMinecraftServer = Reflection.getField("{obc}.CraftServer", minecraftServerClass, 0);
     private static final Reflection.FieldAccessor<Object> getServerConnection = Reflection.getField(minecraftServerClass, serverConnectionClass, 0);
     // This depends on the arrangement of fields in the ServerConnection class, check in every new version for updates!
@@ -46,8 +47,15 @@ public abstract class TinyProtocol {
 //    private static final Reflection.MethodInvoker getNetworkMarkers = Reflection.getTypedMethod(serverConnectionClass, null, List.class, serverConnectionClass);
 
     // Packets we have to intercept
-    private static final Class<?> PACKET_LOGIN_IN_START = Reflection.getMinecraftClass("PacketLoginInStart");
-    private static final Reflection.FieldAccessor<GameProfile> getGameProfile = Reflection.getField(PACKET_LOGIN_IN_START, GameProfile.class, 0);
+    private static final Class<?> PACKET_LOGIN_IN_START = Reflection.getMinecraftClass("PacketLoginInStart", "login");
+
+    private static String getProfileName(Object loginInPacket) {
+        if(MinecraftProtocol.isNewMinecraftProtocol()) {
+            return Reflection.getField(PACKET_LOGIN_IN_START, String.class, 0).get(loginInPacket);
+        } else {
+            return Reflection.getField(PACKET_LOGIN_IN_START, GameProfile.class, 0).get(loginInPacket).getName();
+        }
+    }
 
     // Speedup channel lookup
     // Made channelLookup UUID-based (JMB - 23rd Jan. 2021)
@@ -340,8 +348,8 @@ public abstract class TinyProtocol {
 
         private void handleLoginStart(Channel channel, Object packet) {
             if (PACKET_LOGIN_IN_START.isInstance(packet)) {
-                GameProfile profile = getGameProfile.get(packet);
-                channelLookup.put(profile.getName(), channel);
+                //GameProfile profile = getGameProfile.get(packet);
+                channelLookup.put(getProfileName(packet), channel);
             }
         }
     }

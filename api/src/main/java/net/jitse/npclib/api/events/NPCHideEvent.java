@@ -24,6 +24,7 @@ public class NPCHideEvent extends Event implements Cancellable {
     private final boolean automatic;
 
     public NPCHideEvent(NPC npc, Player player, boolean automatic) {
+        super(true);
         this.npc = npc;
         this.player = player;
         this.automatic = automatic;

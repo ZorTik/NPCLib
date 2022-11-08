@@ -251,37 +251,39 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
     }
 
     public void show(Player player, boolean auto) {
-        NPCShowEvent event = new NPCShowEvent(this, player, auto);
-        Bukkit.getServer().getPluginManager().callEvent(event);
-        if (event.isCancelled()) {
-            return;
-        }
+        Bukkit.getScheduler().runTaskAsynchronously(instance.getPlugin(), () -> {
+            NPCShowEvent event = new NPCShowEvent(this, player, auto);
+            Bukkit.getServer().getPluginManager().callEvent(event);
+            if (event.isCancelled()) {
+                return;
+            }
 
-        if (isShown(player)) {
-            throw new IllegalArgumentException("NPC is already shown to player");
-        }
+            if (isShown(player)) {
+                throw new IllegalArgumentException("NPC is already shown to player");
+            }
 
-        if (auto) {
-            sendShowPackets(player);
-            sendMetadataPacket(player);
-            sendEquipmentPackets(player);
-
-            // NPC is auto-shown now, we can remove the UUID from the set.
-            autoHidden.remove(player.getUniqueId());
-        } else {
-            // Adding the UUID to the set.
-            shown.add(player.getUniqueId());
-
-            if (inRangeOf(player) && inViewOf(player)) {
-                // The player can see the NPC and is in range, send the packets.
+            if (auto) {
                 sendShowPackets(player);
                 sendMetadataPacket(player);
                 sendEquipmentPackets(player);
+
+                // NPC is auto-shown now, we can remove the UUID from the set.
+                autoHidden.remove(player.getUniqueId());
             } else {
-                // We'll wait until we can show the NPC to the player via auto-show.
-                autoHidden.add(player.getUniqueId());
+                // Adding the UUID to the set.
+                shown.add(player.getUniqueId());
+
+                if (inRangeOf(player) && inViewOf(player)) {
+                    // The player can see the NPC and is in range, send the packets.
+                    sendShowPackets(player);
+                    sendMetadataPacket(player);
+                    sendEquipmentPackets(player);
+                } else {
+                    // We'll wait until we can show the NPC to the player via auto-show.
+                    autoHidden.add(player.getUniqueId());
+                }
             }
-        }
+        });
     }
 
     @Override
@@ -290,37 +292,39 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
     }
 
     public void hide(Player player, boolean auto) {
-        NPCHideEvent event = new NPCHideEvent(this, player, auto);
-        Bukkit.getServer().getPluginManager().callEvent(event);
-        if (event.isCancelled()) {
-            return;
-        }
-
-        if (!shown.contains(player.getUniqueId())) {
-            throw new IllegalArgumentException("NPC cannot be hidden from player before calling NPC#show first");
-        }
-
-        if (auto) {
-            if (autoHidden.contains(player.getUniqueId())) {
-                throw new IllegalStateException("NPC cannot be auto-hidden twice");
+        Bukkit.getScheduler().runTaskAsynchronously(instance.getPlugin(), () -> {
+            NPCHideEvent event = new NPCHideEvent(this, player, auto);
+            Bukkit.getServer().getPluginManager().callEvent(event);
+            if (event.isCancelled()) {
+                return;
             }
 
-            sendHidePackets(player);
+            if (!shown.contains(player.getUniqueId())) {
+                throw new IllegalArgumentException("NPC cannot be hidden from player before calling NPC#show first");
+            }
 
-            // NPC is auto-hidden now, we will add the UUID to the set.
-            autoHidden.add(player.getUniqueId());
-        } else {
-            // Removing the UUID from the set.
-            shown.remove(player.getUniqueId());
+            if (auto) {
+                if (autoHidden.contains(player.getUniqueId())) {
+                    throw new IllegalStateException("NPC cannot be auto-hidden twice");
+                }
 
-            if (inRangeOf(player)) {
-                // The player is in range of the NPC, send the packets.
                 sendHidePackets(player);
+
+                // NPC is auto-hidden now, we will add the UUID to the set.
+                autoHidden.add(player.getUniqueId());
             } else {
-                // We don't have to send any packets, just don't let it auto-show again by removing the UUID from the set.
-                autoHidden.remove(player.getUniqueId());
+                // Removing the UUID from the set.
+                shown.remove(player.getUniqueId());
+
+                if (inRangeOf(player)) {
+                    // The player is in range of the NPC, send the packets.
+                    sendHidePackets(player);
+                } else {
+                    // We don't have to send any packets, just don't let it auto-show again by removing the UUID from the set.
+                    autoHidden.remove(player.getUniqueId());
+                }
             }
-        }
+        });
     }
 
     @Override
