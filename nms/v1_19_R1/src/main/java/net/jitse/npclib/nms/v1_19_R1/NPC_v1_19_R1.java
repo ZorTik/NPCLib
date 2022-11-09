@@ -5,6 +5,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.*;
+import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import net.jitse.npclib.NPCLib;
 import net.jitse.npclib.api.skin.Skin;
@@ -22,9 +23,6 @@ import org.bukkit.entity.Player;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-
-import static com.comphenix.protocol.wrappers.WrappedChatComponent.fromLegacyText;
 
 public class NPC_v1_19_R1 extends NPCBase {
     private final ProtocolManager protocol;
@@ -48,6 +46,7 @@ public class NPC_v1_19_R1 extends NPCBase {
         WrappedGameProfile profile = new WrappedGameProfile(uuid, name);
         profile.getProperties().get("textures").clear();
         profile.getProperties().put("textures", new WrappedSignedProperty("textures", skin.getValue(), skin.getSignature()));
+        doInitializationCheck();
         for(Player player : Bukkit.getOnlinePlayers()) {
             protocol.sendServerPacket(player, playerInfoRemovePacket);
             ((CraftPlayer) player).getHandle().b.a(destroyPacket);
@@ -73,6 +72,7 @@ public class NPC_v1_19_R1 extends NPCBase {
 
     @Override
     public void sendShowPackets(Player player) {
+        doInitializationCheck();
         if(hasTeamRegistered.add(player.getUniqueId())) {
             protocol.sendServerPacket(player, teamRegisterPacket);
         }
@@ -89,6 +89,7 @@ public class NPC_v1_19_R1 extends NPCBase {
 
     @Override
     public void sendHidePackets(Player player) {
+        doInitializationCheck();
         ((CraftPlayer) player).getHandle().b.a(destroyPacket);
         protocol.sendServerPacket(player, playerInfoRemovePacket);
         getHologram(player).hide(player);
@@ -96,11 +97,13 @@ public class NPC_v1_19_R1 extends NPCBase {
 
     @Override
     public void sendMetadataPacket(Player player) {
+        doInitializationCheck();
         // TODO
     }
 
     @Override
     public void sendEquipmentPacket(Player player, NPCSlot slot, boolean auto) {
+        doInitializationCheck();
         PacketContainer packet = protocol.createPacket(PacketType.Play.Server.ENTITY_EQUIPMENT);
         packet.getIntegers().write(0, entityId);
         packet.getItemSlots().write(0, EnumWrappers.ItemSlot.valueOf(slot.getNmsName()));
@@ -110,6 +113,7 @@ public class NPC_v1_19_R1 extends NPCBase {
 
     @Override
     public void sendAnimationPacket(Player player, NPCAnimation animation) {
+        doInitializationCheck();
         PacketContainer packet = protocol.createPacket(PacketType.Play.Server.ANIMATION);
         packet.getIntegers().write(0, entityId);
         packet.getIntegers().write(1, animation.getId());
@@ -118,6 +122,7 @@ public class NPC_v1_19_R1 extends NPCBase {
 
     @Override
     public void sendHeadRotationPackets(Location location) {
+        doInitializationCheck();
         // TODO: Look at location.
     }
 
@@ -134,15 +139,14 @@ public class NPC_v1_19_R1 extends NPCBase {
     private void buildTeamRegister(String name) {
         teamRegisterPacket = protocol.createPacket(PacketType.Play.Server.SCOREBOARD_TEAM);
 
-        teamRegisterPacket.getBytes().write(0, (byte) 0x01);
+        teamRegisterPacket.getModifier().writeDefaults();
         teamRegisterPacket.getStrings().write(0, name);
-        teamRegisterPacket.getStrings().write(1, "never");
-        teamRegisterPacket.getStrings().write(2, "always");
-        teamRegisterPacket.getStrings().write(3, "");
-        teamRegisterPacket.getStrings().write(4, "");
-        teamRegisterPacket.getIntegers().write(0, 21);
-        teamRegisterPacket.getIntegers().write(1, 1);
-        teamRegisterPacket.getStringArrays().write(0, new String[]{name});
+        teamRegisterPacket.getIntegers().write(0, 1);
+        teamRegisterPacket.getPlayerInfoDataLists().write(0, Lists.newArrayList(
+                // NativeGameMode throws error while trying to find the right EnumGamemode for current version on 09/11 2022.
+                // I made custom ProtocolLib fork.
+                new PlayerInfoData(new WrappedGameProfile(uuid, name), 0, EnumWrappers.NativeGameMode.NONE, WrappedChatComponent.fromText(name))
+        ));
     }
 
     private PacketContainer buildPlayerInfoAdd(String name, GameProfile gameProfile) {
@@ -187,6 +191,12 @@ public class NPC_v1_19_R1 extends NPCBase {
         this.headRotationPacket = protocol.createPacket(PacketType.Play.Server.ENTITY_HEAD_ROTATION);
         headRotationPacket.getIntegers().write(0, entityId);
         headRotationPacket.getBytes().write(0, (byte) (location.getYaw() * 256.0F / 360.0F));
+    }
+
+    private void doInitializationCheck() {
+        if(teamRegisterPacket == null || playerInfoRemovePacket == null || headRotationPacket == null || spawnPacket == null || destroyPacket == null) {
+            createPackets();
+        }
     }
 
 }
