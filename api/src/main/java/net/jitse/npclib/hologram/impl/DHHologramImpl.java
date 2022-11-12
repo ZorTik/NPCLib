@@ -76,4 +76,9 @@ public class DHHologramImpl implements Hologram {
         }
     }
 
+    @Override
+    public void destroy(Player player) {
+        hide(player);
+    }
+
 }

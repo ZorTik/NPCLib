@@ -10,4 +10,8 @@ public interface Hologram {
     void show(Player player);
     void hide(Player player);
 
+    default void destroy(Player player) {
+        // User implementation.
+    }
+
 }

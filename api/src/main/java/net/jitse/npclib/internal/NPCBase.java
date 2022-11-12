@@ -27,6 +27,8 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
+import static net.jitse.npclib.utilities.Nullables.doForEveryPresent;
+
 public abstract class NPCBase implements NPC, NPCPacketHandler {
 
     protected final int entityId = Integer.MAX_VALUE - NPCManager.getAllNPCs().size();
@@ -160,7 +162,11 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
         for (UUID uuid : shown) {
             if (autoHidden.contains(uuid)) continue;
             Player player = Bukkit.getPlayer(uuid);
-            if (player != null) hide(player, true); // which will also destroy the holograms
+            if (player != null) {
+                hide(player, true); // which will also destroy the holograms
+                Optional.ofNullable(getHologram(player))
+                        .ifPresent(holo -> holo.destroy(player)); // Sending destroy signal for every situation.
+            }
         }
     }
 
@@ -219,9 +225,14 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
     }
 
     public void onLogout(Player player) {
+
         getAutoHidden().remove(player.getUniqueId());
         getShown().remove(player.getUniqueId()); // Don't need to use NPC#hide since the entity is not registered in the NMS server.
         hasTeamRegistered.remove(player.getUniqueId());
+
+        doForEveryPresent(holo -> {
+            holo.destroy(player);
+        }, playerHologram.remove(player.getUniqueId()));
     }
 
     public boolean inRangeOf(Player player) {
@@ -259,7 +270,8 @@ public abstract class NPCBase implements NPC, NPCPacketHandler {
             }
 
             if (isShown(player)) {
-                throw new IllegalArgumentException("NPC is already shown to player");
+                //throw new IllegalArgumentException("NPC is already shown to player");
+                return;
             }
 
             if (auto) {

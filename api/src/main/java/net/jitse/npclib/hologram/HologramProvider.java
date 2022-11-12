@@ -18,6 +18,7 @@ public class HologramProvider {
         if(!version.isAboveOrEqual(MinecraftVersion.V1_19_R1)) {
             return new HologramImpl(version, location, text);
         } else if((availableType = HologramType.firstAvailable(base).orElse(null)) != null) {
+            location = location.clone().add(0.0, 1.8 + (0.25 * text.size()), 0.0);
             switch(availableType){
                 case HD:
                     return new HDHologramImpl(base, location, text);
